@@ -1,0 +1,47 @@
+# ==========================================
+# Levantamento de Copo IA - Root .gitignore
+# ==========================================
+
+# --- Editor / IDE configurations ---
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userossc
+*.sln.docstates
+
+# --- C# / .NET compilation files ---
+**/bin/
+**/obj/
+*.userprefs
+*.usertasks
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+
+# --- Node.js / React dependencies and builds ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+**/dist/
+**/build-artifacts/
+
+# --- Secrets & Local Configurations (DO NOT COMMIT!) ---
+**/appsettings.Development.json
+**/appsettings.local.json
+**/appsettings.Development.*
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# --- OS temporary files ---
+.DS_Store
+Thumbs.db
+Desktop.ini
