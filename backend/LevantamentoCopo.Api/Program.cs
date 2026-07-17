@@ -41,6 +41,11 @@ builder.Services.AddAuthentication(options =>
 // Configure EF Core with PostgreSQL
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
+if (!string.IsNullOrEmpty(connectionString))
+{
+    connectionString = connectionString.Trim().Trim('"', '\'');
+}
+
 if (!string.IsNullOrEmpty(connectionString) && (connectionString.StartsWith("postgres://") || connectionString.StartsWith("postgresql://")))
 {
     var databaseUri = new Uri(connectionString);
