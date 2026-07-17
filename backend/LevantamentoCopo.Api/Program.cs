@@ -44,14 +44,32 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 if (!string.IsNullOrEmpty(connectionString) && (connectionString.StartsWith("postgres://") || connectionString.StartsWith("postgresql://")))
 {
     var databaseUri = new Uri(connectionString);
-    var userInfo = databaseUri.UserInfo.Split(':');
-    var username = userInfo[0];
-    var password = userInfo.Length > 1 ? userInfo[1] : "";
+    var colonIndex = databaseUri.UserInfo.IndexOf(':');
+    var username = colonIndex >= 0 ? databaseUri.UserInfo.Substring(0, colonIndex) : databaseUri.UserInfo;
+    var password = colonIndex >= 0 ? databaseUri.UserInfo.Substring(colonIndex + 1) : "";
+    
+    // Decodifica caracteres especiais como %40 (@), %3A (:), %3D (=) etc
+    username = Uri.UnescapeDataString(username);
+    password = Uri.UnescapeDataString(password);
+    
     var host = databaseUri.Host;
     var port = databaseUri.Port > 0 ? databaseUri.Port : 5432;
     var database = databaseUri.AbsolutePath.TrimStart('/');
     
-    connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true";
+    // Envolvemos a senha em aspas duplas caso ela contenha ponto e vírgula ou outros delimitadores
+    connectionString = $"Host={host};Port={port};Database={database};Username={username};Password=\"{password}\";SSL Mode=Require;Trust Server Certificate=true";
+}
+
+// Imprime a string de conexão mascarada para debug seguro no Render
+if (!string.IsNullOrEmpty(connectionString))
+{
+    var parts = connectionString.Split(';');
+    for (int i = 0; i < parts.Length; i++)
+    {
+        if (parts[i].StartsWith("Password=", StringComparison.OrdinalIgnoreCase))
+            parts[i] = "Password=********";
+    }
+    Console.WriteLine($"[Database Debug] Connection String: {string.Join(";", parts)}");
 }
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -76,6 +94,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        await context.Database.EnsureCreatedAsync();
         await context.Database.ExecuteSqlRawAsync(@"
             ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(150);
             ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
